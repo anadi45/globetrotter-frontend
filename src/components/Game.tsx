@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Layout, Space, Progress, message } from 'antd'
-import { LogoutOutlined, GlobalOutlined, TrophyOutlined } from '@ant-design/icons'
+import { Card, Button, Typography, Layout, Space, Progress, message, Modal } from 'antd'
+import { LogoutOutlined, GlobalOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
 import Confetti from 'react-confetti'
 import { SERVER_URL } from '../config/env'
+import html2canvas from 'html2canvas'
 
 const { Title, Text } = Typography
 const { Header, Content } = Layout
@@ -19,6 +20,14 @@ interface AnswerResponseDto {
   isCorrect: boolean;
   correctAnswer: string;
   fact: string;
+}
+
+interface ShareableScore {
+  username: string;
+  score: {
+    correct: number;
+    total: number;
+  };
 }
 
 const StyledLayout = styled(Layout)`
@@ -69,6 +78,14 @@ const OptionButton = styled(Button)<{ $isCorrect?: boolean; $isWrong?: boolean }
   `}
 `
 
+const ShareCard = styled(Card)`
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+  color: white;
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 16px;
+`
+
 function Game() {
   const navigate = useNavigate()
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null)
@@ -76,6 +93,9 @@ function Game() {
   const [answerResponse, setAnswerResponse] = useState<AnswerResponseDto | null>(null)
   const [score, setScore] = useState({ correct: 0, total: 0 })
   const [selectedAnswer, setSelectedAnswer] = useState<string>('')
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [shareableLink, setShareableLink] = useState('')
+  const scoreCardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -85,6 +105,23 @@ function Game() {
     }
     fetchNewQuestion()
   }, [navigate])
+
+  useEffect(() => {
+    // Check if this is a shared game
+    const urlParams = new URLSearchParams(window.location.search)
+    const sharedScore = urlParams.get('score')
+    if (sharedScore) {
+      try {
+        const decodedScore: ShareableScore = JSON.parse(atob(sharedScore))
+        message.info(
+          `${decodedScore.username}'s score: ${decodedScore.score.correct}/${decodedScore.score.total}. 
+          Can you beat it?`
+        )
+      } catch (error) {
+        console.error('Error parsing shared score:', error)
+      }
+    }
+  }, [])
 
   const fetchNewQuestion = async () => {
     try {
@@ -150,6 +187,46 @@ function Game() {
     navigate('/')
   }
 
+  const generateShareableLink = async () => {
+    try {
+      const username = localStorage.getItem('username') || 'A friend'
+      const scoreData: ShareableScore = {
+        username,
+        score: {
+          correct: score.correct,
+          total: score.total
+        }
+      }
+      const encodedScore = btoa(JSON.stringify(scoreData))
+      const baseUrl = window.location.origin
+      const shareableLink = `${baseUrl}/game?score=${encodedScore}`
+      setShareableLink(shareableLink)
+      
+      // Generate image of the score card
+      if (scoreCardRef.current) {
+        const canvas = await html2canvas(scoreCardRef.current)
+        const imageUrl = canvas.toDataURL()
+        // You could upload this image to a service and include it in the share
+      }
+      
+      setIsShareModalOpen(true)
+    } catch (error) {
+      console.error('Error generating shareable link:', error)
+      message.error('Failed to generate share link')
+    }
+  }
+
+  const handleShare = (platform: 'whatsapp' | 'copy') => {
+    if (platform === 'whatsapp') {
+      const whatsappUrl = `https://wa.me/?text=Can you beat my GlobeTrotter score? ${score.correct}/${score.total} correct answers! Try it here: ${shareableLink}`
+      window.open(whatsappUrl, '_blank')
+    } else {
+      navigator.clipboard.writeText(shareableLink)
+      message.success('Link copied to clipboard!')
+    }
+    setIsShareModalOpen(false)
+  }
+
   if (!currentQuestion) {
     return (
       <StyledLayout>
@@ -174,6 +251,14 @@ function Game() {
             <TrophyOutlined style={{ color: 'white' }} />
             <Text style={{ color: 'white' }}>Score: {score.correct}/{score.total}</Text>
           </Space>
+          <Button
+            icon={<ShareAltOutlined />}
+            onClick={generateShareableLink}
+            ghost
+            style={{ marginRight: 8 }}
+          >
+            Challenge Friends
+          </Button>
           <Button 
             icon={<LogoutOutlined />} 
             onClick={handleLogout}
@@ -231,6 +316,45 @@ function Game() {
           </StyledCard>
         )}
       </StyledContent>
+
+      <Modal
+        title="Challenge Your Friends!"
+        open={isShareModalOpen}
+        onCancel={() => setIsShareModalOpen(false)}
+        footer={null}
+      >
+        <div ref={scoreCardRef}>
+          <ShareCard>
+            <Title level={3} style={{ color: 'white', margin: 0 }}>
+              🌍 GlobeTrotter Challenge!
+            </Title>
+            <Text style={{ color: 'white', fontSize: 18, display: 'block', margin: '16px 0' }}>
+              I scored {score.correct}/{score.total} correct answers!
+            </Text>
+            <Text style={{ color: 'white' }}>
+              Think you can beat my score?
+            </Text>
+          </ShareCard>
+        </div>
+
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Button
+            type="primary"
+            icon={<WhatsAppOutlined />}
+            block
+            onClick={() => handleShare('whatsapp')}
+            style={{ backgroundColor: '#25D366', marginBottom: 8 }}
+          >
+            Share via WhatsApp
+          </Button>
+          <Button
+            block
+            onClick={() => handleShare('copy')}
+          >
+            Copy Link
+          </Button>
+        </Space>
+      </Modal>
     </StyledLayout>
   )
 }
