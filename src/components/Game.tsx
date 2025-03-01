@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Typography, Layout, Space, Progress, message, Modal } from 'antd'
-import { LogoutOutlined, GlobalOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined } from '@ant-design/icons'
+import { Card, Button, Typography, Layout, Space, message, Modal, Dropdown, Avatar } from 'antd'
+import { LogoutOutlined, GlobalOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined, UserOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
 import Confetti from 'react-confetti'
 import { SERVER_URL } from '../config/env'
 import html2canvas from 'html2canvas'
+import type { MenuProps } from 'antd'
 
 const { Title, Text } = Typography
 const { Header, Content } = Layout
@@ -25,7 +26,7 @@ interface GameQuestion {
 interface AnswerResponseDto {
   isCorrect: boolean;
   correctAnswer: string;
-  fact: string;
+  funFacts: string[];
 }
 
 interface ShareableScore {
@@ -47,6 +48,14 @@ const StyledHeader = styled(Header)`
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
+  
+  .ant-space {
+    cursor: pointer;
+    
+    &:hover {
+      opacity: 0.9;
+    }
+  }
 `
 
 const StyledContent = styled(Content)`
@@ -102,6 +111,22 @@ const ChallengeBanner = styled(Card)`
   }
 `
 
+const MenuItemContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+
+const FactsCard = styled(Card)`
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 16px;
+
+  .ant-card-body {
+    padding: 16px;
+  }
+`
+
 function Game() {
   const navigate = useNavigate()
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null)
@@ -113,6 +138,7 @@ function Game() {
   const [shareableLink, setShareableLink] = useState('')
   const scoreCardRef = useRef<HTMLDivElement>(null)
   const [challengeInfo, setChallengeInfo] = useState<GameQuestion['challenge']>()
+  const [username, setUsername] = useState(localStorage.getItem('username') || 'User')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -214,6 +240,7 @@ function Game() {
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('username')
     navigate('/')
   }
 
@@ -254,6 +281,55 @@ function Game() {
     setIsShareModalOpen(false)
   }
 
+  // Add dropdown menu items
+  const dropdownItems: MenuProps['items'] = [
+    {
+      key: 'username',
+      label: (
+        <div style={{ padding: '4px 0' }}>
+          Signed in as <strong>{username}</strong>
+        </div>
+      ),
+      disabled: true,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'score',
+      label: (
+        <Space>
+          <TrophyOutlined />
+          Score: {score.correct}/{score.total}
+        </Space>
+      ),
+    },
+    {
+      key: 'challenge',
+      label: (
+        <Space>
+          <ShareAltOutlined />
+          Challenge Friends
+        </Space>
+      ),
+      onClick: generateShareableLink,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: (
+        <Space>
+          <LogoutOutlined />
+          Logout
+        </Space>
+      ),
+      onClick: handleLogout,
+      danger: true,
+    },
+  ]
+
   if (!currentQuestion) {
     return (
       <StyledLayout>
@@ -273,27 +349,23 @@ function Game() {
           <GlobalOutlined style={{ fontSize: 24, color: 'white' }} />
           <Title level={4} style={{ color: 'white', margin: 0 }}>GlobeTrotter</Title>
         </Space>
-        <Space>
-          <Space>
-            <TrophyOutlined style={{ color: 'white' }} />
-            <Text style={{ color: 'white' }}>Score: {score.correct}/{score.total}</Text>
+
+        <Dropdown 
+          menu={{ items: dropdownItems }} 
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Space style={{ cursor: 'pointer' }}>
+            <Avatar
+              style={{ 
+                backgroundColor: '#1890ff',
+                verticalAlign: 'middle',
+              }}
+              icon={<UserOutlined />}
+            />
+            <Text style={{ color: 'white' }}>{username}</Text>
           </Space>
-          <Button
-            icon={<ShareAltOutlined />}
-            onClick={generateShareableLink}
-            ghost
-            style={{ marginRight: 8 }}
-          >
-            Challenge Friends
-          </Button>
-          <Button 
-            icon={<LogoutOutlined />} 
-            onClick={handleLogout}
-            ghost
-          >
-            Logout
-          </Button>
-        </Space>
+        </Dropdown>
       </StyledHeader>
 
       <StyledContent>
@@ -339,9 +411,25 @@ function Game() {
                   ? `🎉 Correct! You're amazing!` 
                   : '😢 Oops! Not quite right.'}
               </Title>
-              {answerResponse.fact && (
-                <Text>✨ Fun Fact: {answerResponse.fact}</Text>
-              )}
+
+              <div>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  {/* Show the answer fact */}
+                  {answerResponse.funFacts && (
+                    <FactsCard>
+                      <Text strong style={{ color: '#1890ff', display: 'block', marginBottom: '8px' }}>Fun Facts:</Text>
+                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                        {answerResponse.funFacts.map((fact, index) => (
+                          <li key={index}>
+                            <Text>{fact}</Text>
+                          </li>
+                        ))}
+                      </ul>
+                    </FactsCard>
+                  )}
+                </Space>
+              </div>
+
               <Button 
                 type="primary" 
                 onClick={fetchNewQuestion}

@@ -56,6 +56,7 @@ function Auth() {
 
       if (response.ok) {
         localStorage.setItem('token', data.token)
+        localStorage.setItem('username', values.username)
         message.success(`${activeTab === 'login' ? 'Login' : 'Registration'} successful!`)
         navigate('/game')
       } else {
