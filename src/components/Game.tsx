@@ -11,9 +11,15 @@ const { Title, Text } = Typography
 const { Header, Content } = Layout
 
 interface GameQuestion {
-  questionId: string;
+  id: string;
+  destination: string;
   clues: string[];
+  funFacts: string[];
   options: string[];
+  challenge?: {
+    inviterUsername: string;
+    inviterScore: number;
+  };
 }
 
 interface AnswerResponseDto {
@@ -86,6 +92,16 @@ const ShareCard = styled(Card)`
   margin-bottom: 16px;
 `
 
+const ChallengeBanner = styled(Card)`
+  background: linear-gradient(135deg, #722ed1 0%, #1890ff 100%);
+  margin-bottom: 24px;
+  border: none;
+  
+  .ant-card-body {
+    padding: 16px;
+  }
+`
+
 function Game() {
   const navigate = useNavigate()
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null)
@@ -96,6 +112,7 @@ function Game() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [shareableLink, setShareableLink] = useState('')
   const scoreCardRef = useRef<HTMLDivElement>(null)
+  const [challengeInfo, setChallengeInfo] = useState<GameQuestion['challenge']>()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -103,6 +120,19 @@ function Game() {
       navigate('/')
       return
     }
+
+    // Check for challenge parameters in URL
+    const urlParams = new URLSearchParams(window.location.search)
+    const challengeData = urlParams.get('challenge')
+    if (challengeData) {
+      try {
+        const decodedChallenge = JSON.parse(atob(challengeData))
+        setChallengeInfo(decodedChallenge)
+      } catch (error) {
+        console.error('Error parsing challenge data:', error)
+      }
+    }
+
     fetchNewQuestion()
   }, [navigate])
 
@@ -158,7 +188,7 @@ function Game() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          questionId: currentQuestion?.questionId,
+          questionId: currentQuestion?.id,
           selectedOption: option
         })
       })
@@ -190,19 +220,15 @@ function Game() {
   const generateShareableLink = async () => {
     try {
       const username = localStorage.getItem('username') || 'A friend'
-      const scoreData: ShareableScore = {
-        username,
-        score: {
-          correct: score.correct,
-          total: score.total
-        }
+      const challengeData = {
+        inviterUsername: username,
+        inviterScore: score.correct
       }
-      const encodedScore = btoa(JSON.stringify(scoreData))
+      const encodedChallenge = btoa(JSON.stringify(challengeData))
       const baseUrl = window.location.origin
-      const shareableLink = `${baseUrl}/game?score=${encodedScore}`
+      const shareableLink = `${baseUrl}/game?challenge=${encodedChallenge}`
       setShareableLink(shareableLink)
       
-      // Generate image of the score card
       if (scoreCardRef.current) {
         const canvas = await html2canvas(scoreCardRef.current)
         const imageUrl = canvas.toDataURL()
@@ -218,11 +244,12 @@ function Game() {
 
   const handleShare = (platform: 'whatsapp' | 'copy') => {
     if (platform === 'whatsapp') {
-      const whatsappUrl = `https://wa.me/?text=Can you beat my GlobeTrotter score? ${score.correct}/${score.total} correct answers! Try it here: ${shareableLink}`
+      const challengeText = `🌍 I scored ${score.correct} points in GlobeTrotter! Think you can beat my score? Accept the challenge here: ${shareableLink}`
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(challengeText)}`
       window.open(whatsappUrl, '_blank')
     } else {
       navigator.clipboard.writeText(shareableLink)
-      message.success('Link copied to clipboard!')
+      message.success('Challenge link copied to clipboard!')
     }
     setIsShareModalOpen(false)
   }
@@ -270,6 +297,17 @@ function Game() {
       </StyledHeader>
 
       <StyledContent>
+        {challengeInfo && (
+          <ChallengeBanner>
+            <Space align="center" style={{ width: '100%', justifyContent: 'center' }}>
+              <TrophyOutlined style={{ fontSize: 24, color: 'white' }} />
+              <Text style={{ color: 'white', fontSize: 16 }}>
+                {challengeInfo.inviterUsername} challenged you! Their score: {challengeInfo.inviterScore} points
+              </Text>
+            </Space>
+          </ChallengeBanner>
+        )}
+
         <StyledCard title="Guess the Destination">
           {currentQuestion.clues.map((clue, index) => (
             <Text key={index} style={{ display: 'block', marginBottom: 16 }}>
@@ -329,7 +367,7 @@ function Game() {
               🌍 GlobeTrotter Challenge!
             </Title>
             <Text style={{ color: 'white', fontSize: 18, display: 'block', margin: '16px 0' }}>
-              I scored {score.correct}/{score.total} correct answers!
+              I scored {score.correct} points!
             </Text>
             <Text style={{ color: 'white' }}>
               Think you can beat my score?
