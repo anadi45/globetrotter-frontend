@@ -140,6 +140,10 @@ function Game() {
       navigate('/')
       return
     }
+    const score = localStorage.getItem('score')
+    if (score) {
+      setScore(JSON.parse(score))
+    }
 
     // Check for challenge parameters in URL
     const urlParams = new URLSearchParams(window.location.search)
@@ -227,6 +231,7 @@ function Game() {
         correct: prev.correct + (data.isCorrect ? 1 : 0),
         total: prev.total + 1
       }))
+
     } catch (error) {
       console.error('Error checking answer:', error)
     }
@@ -306,11 +311,15 @@ function Game() {
   const HeaderActions = styled(Space)`
     .score-badge {
       background: rgba(255, 255, 255, 0.2);
-      padding: 4px 12px;
+      padding: 8px 16px;
       border-radius: 16px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+
+      .anticon {
+        font-size: 20px;
+      }
     }
 
     .challenge-button {
@@ -342,9 +351,14 @@ function Game() {
         <HeaderActions size="middle">
           <div className="score-badge">
             <TrophyOutlined style={{ color: 'white' }} />
-            <Text style={{ color: 'white' }}>
-              {score.correct}/{score.total}
-            </Text>
+            <Space direction="vertical" size={0} style={{ lineHeight: '1.2' }}>
+              <Text style={{ color: 'white' }}>
+                Score: {score.correct}
+              </Text>
+              <Text style={{ color: 'white', fontSize: '12px', opacity: 0.8 }}>
+                Games: {score.total}
+              </Text>
+            </Space>
           </div>
 
           <Button
