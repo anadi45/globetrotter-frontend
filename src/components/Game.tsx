@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, Button, Typography, Layout, Space, message, Modal, Dropdown, Avatar } from 'antd'
-import { LogoutOutlined, GlobalOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined, UserOutlined } from '@ant-design/icons'
+import { LogoutOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined, UserOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
 import Confetti from 'react-confetti'
 import { SERVER_URL } from '../config/env'
@@ -111,12 +111,6 @@ const ChallengeBanner = styled(Card)`
   }
 `
 
-const MenuItemContent = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`
-
 const FactsCard = styled(Card)`
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -138,7 +132,7 @@ function Game() {
   const [shareableLink, setShareableLink] = useState('')
   const scoreCardRef = useRef<HTMLDivElement>(null)
   const [challengeInfo, setChallengeInfo] = useState<GameQuestion['challenge']>()
-  const [username, setUsername] = useState(localStorage.getItem('username') || 'User')
+  const username = localStorage.getItem('username') || 'User'
 
   useEffect(() => {
     const token = localStorage.getItem('token')
