@@ -137,9 +137,16 @@ function Game() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
+      // Store the current URL's challenge parameter before redirecting
+      const urlParams = new URLSearchParams(window.location.search)
+      const challengeData = urlParams.get('challenge')
+      if (challengeData) {
+        localStorage.setItem('pendingChallenge', challengeData)
+      }
       navigate('/')
       return
     }
+
     const score = localStorage.getItem('score')
     if (score) {
       setScore(JSON.parse(score))

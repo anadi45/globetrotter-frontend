@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Form, Input, Button, Typography, message, Tabs } from "antd";
 import { UserOutlined, LockOutlined, GlobalOutlined } from "@ant-design/icons";
@@ -41,6 +41,15 @@ function Auth() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    // Check for challenge parameters in URL and store if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const challengeData = urlParams.get('challenge');
+    if (challengeData) {
+      localStorage.setItem('pendingChallenge', challengeData);
+    }
+  }, []);
+
   const handleSubmit = async (values: AuthFormData) => {
     try {
       const endpoint = activeTab === "login" ? "users/login" : "users/register";
@@ -64,7 +73,15 @@ function Auth() {
         message.success(
           `${activeTab === "login" ? "Login" : "Registration"} successful!`
         );
-        navigate("/game");
+
+        // Check for pending challenge and redirect accordingly
+        const pendingChallenge = localStorage.getItem('pendingChallenge');
+        if (pendingChallenge) {
+          localStorage.removeItem('pendingChallenge'); // Clear the stored challenge
+          navigate(`/game?challenge=${pendingChallenge}`);
+        } else {
+          navigate("/game");
+        }
       } else {
         message.error(
           data.message ||
