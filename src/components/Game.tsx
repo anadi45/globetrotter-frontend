@@ -281,7 +281,7 @@ function Game() {
     setIsShareModalOpen(false)
   }
 
-  // Add dropdown menu items
+  // First, update the dropdown items to remove score and challenge options
   const dropdownItems: MenuProps['items'] = [
     {
       key: 'username',
@@ -291,28 +291,6 @@ function Game() {
         </div>
       ),
       disabled: true,
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'score',
-      label: (
-        <Space>
-          <TrophyOutlined />
-          Score: {score.correct}/{score.total}
-        </Space>
-      ),
-    },
-    {
-      key: 'challenge',
-      label: (
-        <Space>
-          <ShareAltOutlined />
-          Challenge Friends
-        </Space>
-      ),
-      onClick: generateShareableLink,
     },
     {
       type: 'divider',
@@ -329,6 +307,24 @@ function Game() {
       danger: true,
     },
   ]
+
+  // Add a styled component for the header actions
+  const HeaderActions = styled(Space)`
+    .score-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .challenge-button {
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  `
 
   if (!currentQuestion) {
     return (
@@ -349,22 +345,40 @@ function Game() {
           <Title level={4} style={{ color: 'white', margin: 0 }}>🌍 GlobeTrotter</Title>
         </Space>
 
-        <Dropdown 
-          menu={{ items: dropdownItems }} 
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Space style={{ cursor: 'pointer' }}>
-            <Avatar
-              style={{ 
-                backgroundColor: '#1890ff',
-                verticalAlign: 'middle',
-              }}
-              icon={<UserOutlined />}
-            />
-            <Text style={{ color: 'white' }}>{username}</Text>
-          </Space>
-        </Dropdown>
+        <HeaderActions size="middle">
+          <div className="score-badge">
+            <TrophyOutlined style={{ color: 'white' }} />
+            <Text style={{ color: 'white' }}>
+              {score.correct}/{score.total}
+            </Text>
+          </div>
+
+          <Button
+            icon={<ShareAltOutlined />}
+            onClick={generateShareableLink}
+            ghost
+            className="challenge-button"
+          >
+            Challenge Friends
+          </Button>
+
+          <Dropdown 
+            menu={{ items: dropdownItems }} 
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Space style={{ cursor: 'pointer' }}>
+              <Avatar
+                style={{ 
+                  backgroundColor: '#1890ff',
+                  verticalAlign: 'middle',
+                }}
+                icon={<UserOutlined />}
+              />
+              <Text style={{ color: 'white' }}>{username}</Text>
+            </Space>
+          </Dropdown>
+        </HeaderActions>
       </StyledHeader>
 
       <StyledContent>
