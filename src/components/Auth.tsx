@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, Form, Input, Button, Typography, message, Tabs } from "antd";
 import { UserOutlined, LockOutlined, GlobalOutlined } from "@ant-design/icons";
 import styled from "styled-components";
-import { SERVER_URL } from "../config/env";
+
 
 const { Title } = Typography;
 
@@ -37,6 +37,7 @@ const LogoTitle = styled(Title)`
 `;
 
 function Auth() {
+  const SERVER_URL='https://globetrotter-backend-production-bf50.up.railway.app'
   const [activeTab, setActiveTab] = useState("login");
   const navigate = useNavigate();
   const [form] = Form.useForm();
