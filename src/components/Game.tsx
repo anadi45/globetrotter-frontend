@@ -4,7 +4,6 @@ import { Card, Button, Typography, Layout, Space, message, Modal, Dropdown, Avat
 import { LogoutOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined, UserOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
 import Confetti from 'react-confetti'
-import { SERVER_URL } from '../config/env'
 import type { MenuProps } from 'antd'
 
 const { Title, Text } = Typography
@@ -121,6 +120,7 @@ const FactsCard = styled(Card)`
 `
 
 function Game() {
+  const SERVER_URL='https://globetrotter-backend-production-bf50.up.railway.app'
   const navigate = useNavigate()
   const [currentQuestion, setCurrentQuestion] = useState<GameQuestion | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -132,6 +132,7 @@ function Game() {
   const scoreCardRef = useRef<HTMLDivElement>(null)
   const [challengeInfo, setChallengeInfo] = useState<GameQuestion['challenge']>()
   const username = localStorage.getItem('username') || 'User'
+  
 
   useEffect(() => {
     const token = localStorage.getItem('token')
