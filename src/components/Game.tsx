@@ -5,7 +5,6 @@ import { LogoutOutlined, TrophyOutlined, ShareAltOutlined, WhatsAppOutlined, Use
 import styled from 'styled-components'
 import Confetti from 'react-confetti'
 import { SERVER_URL } from '../config/env'
-import html2canvas from 'html2canvas'
 import type { MenuProps } from 'antd'
 
 const { Title, Text } = Typography
