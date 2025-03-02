@@ -346,8 +346,7 @@ function Game() {
       
       <StyledHeader>
         <Space>
-          <GlobalOutlined style={{ fontSize: 24, color: 'white' }} />
-          <Title level={4} style={{ color: 'white', margin: 0 }}>GlobeTrotter</Title>
+          <Title level={4} style={{ color: 'white', margin: 0 }}>🌍 GlobeTrotter</Title>
         </Space>
 
         <Dropdown 
