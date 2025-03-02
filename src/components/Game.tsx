@@ -262,12 +262,6 @@ function Game() {
       const shareableLink = `${baseUrl}/game?challenge=${encodedChallenge}`
       setShareableLink(shareableLink)
       
-      if (scoreCardRef.current) {
-        const canvas = await html2canvas(scoreCardRef.current)
-        const imageUrl = canvas.toDataURL()
-        // You could upload this image to a service and include it in the share
-      }
-      
       setIsShareModalOpen(true)
     } catch (error) {
       console.error('Error generating shareable link:', error)
